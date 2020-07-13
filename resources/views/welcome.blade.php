@@ -12,12 +12,17 @@
         @{{ message }}
     </p>
 
+    <p>Specify Amount and Pay </p>
+    <input type="number" v-model="amount">
+
+    <br>
+
     <div id="paypal-button-container"></div>
 </div>
 
 <!-- Add the checkout buttons, set up the order and approve the order -->
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-<script src="https://www.paypal.com/sdk/js?client-id={{ $clientId }}"></script>
+<script src="https://www.paypal.com/sdk/js?intent=authorize&client-id={{ $clientId }}"></script>
 
 <script>
     var app = new Vue({
@@ -25,6 +30,7 @@
         data: {
             message: 'Hello Vue!',
             loading: false,
+            amount: 50,
         },
         mounted() {
             paypal.Buttons({
@@ -36,7 +42,10 @@
                         method: 'post',
                         headers: {
                             'content-type': 'application/json'
-                        }
+                        },
+                        body: JSON.stringify({
+                            amount: this.amount
+                        })
                     }).then(function(res) {
                         return res.json();
                     }).then(function(data) {

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use PayPalCheckoutSdk\Core\PayPalHttpClient;
 use PayPalCheckoutSdk\Core\SandboxEnvironment;
+use PayPalCheckoutSdk\Orders\OrdersAuthorizeRequest;
 use PayPalCheckoutSdk\Orders\OrdersCaptureRequest;
 use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 use PayPalCheckoutSdk\Orders\OrdersGetRequest;
@@ -35,7 +36,8 @@ Route::post('/my-server/get-paypal-transaction', function () {
     //dd('Here', request('orderID'), request()->all());
     $orderId = request('orderID');
 
-    $request = new OrdersCaptureRequest($orderId);
+    //$request = new OrdersCaptureRequest($orderId);
+    $request = new OrdersAuthorizeRequest($orderId);
 
     // 3. Call PayPal to capture an authorization
     $client = buildClient();
@@ -45,9 +47,11 @@ Route::post('/my-server/get-paypal-transaction', function () {
 });
 
 Route::post('/my-server/create-paypal-transaction', function () {
+    $amount = request('amount');
+
     $request = new OrdersCreateRequest();
     $request->prefer('return=representation');
-    $request->body = buildRequestBody();
+    $request->body = buildRequestBody($amount);
     // 3. Call PayPal to set up a transaction
     $client = buildClient();
     $response = $client->execute($request);
@@ -81,10 +85,10 @@ function buildClient()
     return new PayPalHttpClient($sandboxEnvironment);
 }
 
-function buildRequestBody()
+function buildRequestBody($amount)
 {
     return [
-        'intent' => 'CAPTURE',
+        'intent' => 'AUTHORIZE',
         'application_context' => [
             'return_url' => 'https://example.com/return',
             'cancel_url' => 'https://example.com/cancel'
@@ -93,11 +97,11 @@ function buildRequestBody()
             [
                 'amount' => [
                     'currency_code' => 'USD',
-                    'value' => '70.00',
+                    'value' => $amount,
                     'breakdown' => [
                         'item_total' => [
                             'currency_code' => 'USD',
-                            'value' => '70.00',
+                            'value' => $amount,
                         ],
                     ],
                 ],
@@ -108,20 +112,10 @@ function buildRequestBody()
                         'description' => 'Curso 21 de Mayo',
                         'unit_amount' => [
                             'currency_code' => 'USD',
-                            'value' => '35.00'
+                            'value' => $amount
                         ],
                         'quantity' => '1',
                     ],
-                    [
-                        'sku' => '002',
-                        'name' => 'Rizos y Trenzas',
-                        'description' => 'Curso 24 de Mayo',
-                        'unit_amount' => [
-                            'currency_code' => 'USD',
-                            'value' => '35.00'
-                        ],
-                        'quantity' => '1',
-                    ]
                 ],
             ]
         ]
